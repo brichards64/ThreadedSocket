@@ -68,7 +68,8 @@ void *SocketCom::Listen(void* arg){
 	  std::cout<<"Failed to accept"<<std::endl;
 	}    
 	else {
-	  pthread_create (&self->threads[tnum], NULL, SocketCom::ListenThread, &tnum);
+	  void* args[2] = {new int(tnum), self};
+	  pthread_create (&self->threads[tnum], NULL, SocketCom::ListenThread, (void*)args);
 	}
       }
       pthread_mutex_unlock (&self->mu_tcontrol); 
@@ -82,33 +83,34 @@ void *SocketCom::Listen(void* arg){
 }
 
 void *SocketCom::ListenThread(void* arg){
-  int tnum=(int)arg;
+  int* tnum = (int*)arg;
+  SocketCom* self = (SocketCom*)(tnum+1);
   
-  pthread_mutex_lock (&mu_tcontrol);
-  while(tcontrol[tnum]){
-    pthread_mutex_unlock (&mu_tcontrol);
+  pthread_mutex_lock (&self->mu_tcontrol);
+  while(self->tcontrol[*tnum]){
+    pthread_mutex_unlock (&self->mu_tcontrol);
     
-    pthread_mutex_lock (&mu_newbuff);
-    while(!*m_newbuff){
+    pthread_mutex_lock (&self->mu_newbuff);
+    while(!*(self->m_newbuff)){
       
-      bzero(m_buffer,256);
-      n = read(newsockfd[tnum],m_buffer,255);
-      if (n < 0)  std::cout<<"Failed to read from socket"<<std::endl;
+      bzero(self->m_buffer,256);
+      self->n = read(self->newsockfd[*tnum],self->m_buffer,255);
+      if (self->n < 0)  std::cout<<"Failed to read from socket"<<std::endl;
       //printf("Here is the message: %s\n",m_buffer);
       
       
-      n = write(newsockfd[tnum],"I got your message",18);
-      if (n < 0)  std::cout<<"Failed to write to socket"<<std::endl;
+      self->n = write(self->newsockfd[*tnum],"I got your message",18);
+      if (self->n < 0)  std::cout<<"Failed to write to socket"<<std::endl;
       
-      *m_newbuff=true;
-      pthread_mutex_unlock (&mu_newbuff);
+      *(self->m_newbuff)=true;
+      pthread_mutex_unlock (&self->mu_newbuff);
     }
-    pthread_mutex_unlock (&mu_newbuff);
+    pthread_mutex_unlock (&self->mu_newbuff);
     
   }
-  tcontrol[tnum]=-1;
-  pthread_mutex_unlock (&mu_tcontrol);
-  std::cout<<"thread "<<tnum<<" exiting"<<std::endl;
+  (self->tcontrol)[*tnum]=-1;
+  pthread_mutex_unlock (&self->mu_tcontrol);
+  std::cout<<"thread "<<*tnum<<" exiting"<<std::endl;
   pthread_exit(NULL);
   
 }
