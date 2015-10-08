@@ -30,7 +30,7 @@ void SocketCom::ListenStart(){
   for (int i=0; i<5;i++){
     tcontrol[i]=-1;
   }
-  pthread_create (&threads[0], NULL, Listen, this); 
+  pthread_create (&threads[0], NULL, SocketCom::Listen, this); 
   
 }
 
@@ -48,7 +48,7 @@ void SocketCom::ListenStop(){
 
 
 void *SocketCom::Listen(void* arg){
-  SocketCom* self=(SocketCom)arg;
+  SocketCom* self=(SocketCom*)arg;
 
   pthread_mutex_lock (&self->mu_tcontrol);
   while(self->tcontrol[0]){
@@ -68,7 +68,7 @@ void *SocketCom::Listen(void* arg){
 	  std::cout<<"Failed to accept"<<std::endl;
 	}    
 	else {
-	  pthread_create (&self->threads[tnum], NULL, self->ListenThread, (void *)tnum);
+	  pthread_create (&self->threads[tnum], NULL, SocketCom::ListenThread, &tnum);
 	}
       }
       pthread_mutex_unlock (&self->mu_tcontrol); 
@@ -82,7 +82,7 @@ void *SocketCom::Listen(void* arg){
 }
 
 void *SocketCom::ListenThread(void* arg){
-  long tnum=(long)arg;
+  int tnum=(int)arg;
   
   pthread_mutex_lock (&mu_tcontrol);
   while(tcontrol[tnum]){
