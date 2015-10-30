@@ -27,35 +27,42 @@ SocketCom::SocketCom(bool client, int port, char *buffer, bool *newbuff){
 }
 
 void SocketCom::ListenStart(){
+  std::cout<<"in thread listen start "<<std::endl;
   for (int i=0; i<5;i++){
     tcontrol[i]=-1;
   }
+  std::cout<<"creating thread 0 "<<std::endl;
   pthread_create (&threads[0], NULL, SocketCom::Listen, this); 
-  
+  std::cout<<"created thread 0 "<<std::endl;
+
 }
 
 void SocketCom::ListenStop(){
-  
+  std::cout<<"in listen stop "<<std::endl;
+
   pthread_mutex_lock (&mu_tcontrol);
   for (int i=0; i<5;i++){
     tcontrol[i]=0;
+    pthread_cancel(threads[i]);
   }
+  std::cout<<"sending stop signals"<<std::endl;
   pthread_mutex_unlock (&mu_tcontrol);
-  
+  std::cout<<"sent stop signals "<<std::endl;
   
 }
 
 
 
 void *SocketCom::Listen(void* arg){
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
   SocketCom* self=(SocketCom*)arg;
-
+ std::cout<<"in thread 0 "<<std::endl;
   pthread_mutex_lock (&self->mu_tcontrol);
   while(self->tcontrol[0]){
     pthread_mutex_unlock (&self->mu_tcontrol);
-    
+     std::cout<<"in while "<<std::endl;
     for(int tnum=1;tnum<5;tnum++){
-      
+      std::cout<<"tnum loop  "<<tnum<<std::endl;
       pthread_mutex_lock (&self->mu_tcontrol);      
       if (self->tcontrol[tnum]==-1){
 	
@@ -83,6 +90,7 @@ void *SocketCom::Listen(void* arg){
 }
 
 void *SocketCom::ListenThread(void* arg){
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
   int* tnum = (int*)arg;
   SocketCom* self = (SocketCom*)(tnum+1);
   

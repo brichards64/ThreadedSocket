@@ -15,7 +15,7 @@ int main(){
   //std::cout<<"*butt or "<<&newbuff<<std::endl;
 
   SocketCom server(false,2010,buffer,newbuff);
-  while (true){
+  //  while (true){
     //std::cout<<"ben debug 1"<<std::endl;
     server.ListenStart();
     //std::cout<<"ben debug 2"<<std::endl;
@@ -23,7 +23,10 @@ int main(){
       //std::cout<<"ben debug 3"<<std::endl;
       std::cout<<buffer<<std::endl;
       *newbuff=false;
-    }
+
+      usleep(1000000);
+      server.ListenStop();
+      //}
   }
   return 0;
   
