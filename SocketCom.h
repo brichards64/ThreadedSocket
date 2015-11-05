@@ -11,20 +11,23 @@
 #include <iostream>
 #include <netdb.h> 
 #include <pthread.h>
+#include <fcntl.h>
 
 class SocketCom{
   
  public:
   
-  SocketCom(bool client, int port, char *buffer,bool *newbuff); //char buffer[256]
+  SocketCom(bool client, std::string hostname, int port, char *buffer,bool *newbuff); //char buffer[256]
   void ListenStart();
   void ListenStop();
 static  void *Listen(void* arg);
 static  void *ListenThread(void* arg);
-  void Send();
+ bool Connect();
+ bool Disconnect();
+ bool Send();
+ 
 
-
-  struct sockaddr_in serv_addr, cli_addr[5];
+  struct sockaddr_in serv_addr, srcaddr,cli_addr[5];
   int sockfd, newsockfd[5], portno, n;
   socklen_t clilen[5];
   char* m_buffer;
@@ -53,6 +56,13 @@ static  void *ListenThread(void* arg);
   
 };
 
+struct input{
 
+public:
+
+  int* tnum ;
+  SocketCom* self;
+
+};
 
 #endif
